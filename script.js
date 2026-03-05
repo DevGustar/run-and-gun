@@ -542,11 +542,28 @@ function drawHUD() {
 
   for (let i = 0; i < player.maxHp; i++) {
     const filled = i < player.hp;
+    const x = W / 2 - 30 + i * 28;
+    const y = 7;
+    const w = 22;
+    const h = 20;
+
     ctx.fillStyle = filled ? '#ff3355' : '#333355';
-    ctx.fillRect(W / 2 - 30 + i * 26, 8, 20, 18);
+
+    // Desenha o coração usando curvas de Bezier
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2, y + h * 0.25);
+    ctx.bezierCurveTo(x + w / 2, y, x, y, x, y + h * 0.25);
+    ctx.bezierCurveTo(x, y + h * 0.6, x + w / 2, y + h * 0.9, x + w / 2, y + h);
+    ctx.bezierCurveTo(x + w / 2, y + h * 0.9, x + w, y + h * 0.6, x + w, y + h * 0.25);
+    ctx.bezierCurveTo(x + w, y, x + w / 2, y, x + w / 2, y + h * 0.25);
+    ctx.fill();
+
+    // Brilho para o coração cheio
     if (filled) {
       ctx.fillStyle = '#ff88aa';
-      ctx.fillRect(W / 2 - 30 + i * 26 + 4, 10, 8, 6);
+      ctx.beginPath();
+      ctx.arc(x + w * 0.25, y + h * 0.25, 2, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
