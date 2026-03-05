@@ -24,6 +24,7 @@ const ENEMY_H = 44;
 // ─── Estado global do jogo ───────────────────
 let score = 0;
 let gameOver = false;
+let isPaused = false;
 let frameCount = 0;
 
 // Temporizador para spawn de inimigos
@@ -97,6 +98,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key.toLowerCase() === 'r' && gameOver) {
     resetGame();
   }
+
+  // Pausar: P
+  if (e.key.toLowerCase() === 'p' && !gameOver) {
+    isPaused = !isPaused;
+  }
 });
 
 document.addEventListener('keyup', (e) => {
@@ -117,17 +123,15 @@ function tryJump() {
   }
 }
 
-// ─── Spawnar inimigo ──────────────────────────
 function spawnEnemy() {
-  // Velocidade aumenta gradualmente com o tempo
   const speedBonus = Math.min(frameCount / 3000, 2.2);
   const speed = 1.2 + Math.random() * 0.8 + speedBonus;
-
-  // Cooldown de disparo: ~60 frames (1s a 60fps), offset aleatório
-  // para que os inimigos não atirem todos ao mesmo tempo
   const shootRate = 60;
-  // Tipo de inimigo: 20% de chance de ser espinhoso
-  const type = Math.random() < 0.2 ? 'spiky' : 'normal';
+
+  const rand = Math.random();
+  let type = 'normal';
+  if (rand < 0.2) type = 'spiky';
+  else if (rand < 0.3) type = 'bumper';
 
   enemies.push({
     x: W + 10,
@@ -136,9 +140,9 @@ function spawnEnemy() {
     hp: 1,
     w: ENEMY_W,
     h: ENEMY_H,
-    shootTimer: Math.floor(Math.random() * shootRate), // offset aleatório
+    shootTimer: Math.floor(Math.random() * shootRate),
     shootRate: shootRate,
-    hasShot: false, // cada inimigo só dispara uma vez
+    hasShot: false,
     type: type,
   });
 }
@@ -229,14 +233,15 @@ function updateEnemies() {
     const e = enemies[i];
     e.x += e.vx;
 
-    // Lógica de disparo: atira apenas uma vez quando o timer é atingido
-    e.shootTimer++;
-    if (e.shootTimer >= e.shootRate && !e.hasShot) {
-      e.shootTimer = 0;
-      e.hasShot = true; // bloqueia disparos futuros
-      // só atira se o inimigo já está na tela
-      if (e.x < W && e.x > 0) {
-        enemyShoot(e);
+    // Lógica de disparo: apenas inimigos 'normal' atiram uma vez
+    if (e.type === 'normal') {
+      e.shootTimer++;
+      if (e.shootTimer >= e.shootRate && !e.hasShot) {
+        e.shootTimer = 0;
+        e.hasShot = true;
+        if (e.x < W && e.x > 0) {
+          enemyShoot(e);
+        }
       }
     }
 
@@ -325,24 +330,38 @@ function detectCollisions() {
     const landedOnTop = prevBottom <= e.y + 6 && player.vy >= 0;
 
     if (landedOnTop) {
-      // Pouso no topo: empurra para cima e restaura saltos
-      player.y = e.y - PLAYER_H;
-      player.vy = 0;
-      player.onGround = true;
-      player.jumpsLeft = 2;
-      // Sem dano — inimigo continua vivo e em movimento
+      if (e.type === 'spiky') {
+        spawnParticles(player.x + PLAYER_W / 2, player.y + PLAYER_H / 2, '#ff0000');
+        player.hp = 0;
+        gameOver = true;
+      } else if (e.type === 'bumper') {
+        // Salto vertical ao bater na cabeça
+        player.y = e.y - PLAYER_H;
+        player.vy = -20;
+        player.vx = 0;
+        player.onGround = false;
+        player.jumpsLeft = 1;
+      } else {
+        player.y = e.y - PLAYER_H;
+        player.vy = 0;
+        player.onGround = true;
+        player.jumpsLeft = 2;
+      }
     } else if (player.invFrames <= 0) {
-      // Colisão lateral: dano normal
-      spawnParticles(
-        player.x + PLAYER_W / 2,
-        player.y + PLAYER_H / 2,
-        '#ffaa00'
-      );
-      player.hp--;
-      player.invFrames = 80;
-      enemies[ei].vx *= 3; // empurra o inimigo para evitar dano contínuo
-
-      if (player.hp <= 0) gameOver = true;
+      if (e.type === 'bumper') {
+        // Impulso forte para a direita
+        player.x += 10;
+        player.vx = 14;
+        player.vy = -8;
+        player.onGround = false;
+        player.jumpsLeft = 1;
+      } else {
+        spawnParticles(player.x + PLAYER_W / 2, player.y + PLAYER_H / 2, '#ffaa00');
+        player.hp--;
+        player.invFrames = 80;
+        enemies[ei].vx *= 3;
+        if (player.hp <= 0) gameOver = true;
+      }
     }
   }
 }
@@ -451,7 +470,11 @@ function drawEnemies() {
     ctx.fillRect(x, y + 12, ENEMY_W, ENEMY_H - 12);
 
     // Cabeça
-    ctx.fillStyle = e.type === 'spiky' ? '#990000' : '#ff4444';
+    if (e.type === 'bumper') {
+      ctx.fillStyle = '#00ff44';
+    } else {
+      ctx.fillStyle = e.type === 'spiky' ? '#990000' : '#ff4444';
+    }
     ctx.fillRect(x + 4, y, ENEMY_W - 8, 16);
 
     // Espinhos (se for tipo spiky)
@@ -465,6 +488,12 @@ function drawEnemies() {
         ctx.lineTo(sx + 8, y);
         ctx.fill();
       }
+    }
+
+    // Detalhes Bumper
+    if (e.type === 'bumper') {
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeRect(x + 6, y + 2, ENEMY_W - 12, 12);
     }
 
     // Olhos vermelhos ameaçadores
@@ -502,6 +531,10 @@ function drawHUD() {
   ctx.font = 'bold 18px "Courier New", monospace';
   ctx.textAlign = 'left';
   ctx.fillText(`SCORE: ${score}`, 14, 24);
+  if (isPaused) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(' - PAUSADO', 120, 24);
+  }
 
   // Vida (coraçõezinhos / blocos)
   ctx.fillStyle = '#00ffcc';
@@ -622,6 +655,7 @@ function drawStartOverlay() {
     '',
     'A / D → Mover      W / Espaço → Pular',
     'L → Atirar         R → Reiniciar',
+    'P → Pausar',
     '',
     'Pulo duplo disponível!',
   ];
@@ -654,7 +688,7 @@ function resetGame() {
 function gameLoop() {
   requestAnimationFrame(gameLoop);
 
-  if (!gameOver) {
+  if (!gameOver && !isPaused) {
     frameCount++;
 
     // 1. Atualizar física e entidades
