@@ -8,11 +8,11 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const W = canvas.width;   // 800
-const H = canvas.height;  // 450
+let W = canvas.width;
+let H = canvas.height;
 
 // ─── Constantes de layout ────────────────────
-const GROUND_Y = H - 60;   // Topo do chão
+let GROUND_Y = H - 60;   // Topo do chão
 const GROUND_H = 60;       // Altura do chão
 const PLAYER_W = 28;
 const PLAYER_H = 48;
@@ -43,8 +43,8 @@ function initPlayer() {
     vx: 0,
     vy: 0,
     speed: 4.5,
-    gravity: 0.55,
-    jumpPower: -13,
+    gravity: 0.4,
+    jumpPower: -11.5,
     onGround: true,
     jumpsLeft: 2,
     hp: 5,
@@ -536,13 +536,13 @@ function drawHUD() {
     ctx.fillText(' - PAUSADO', 120, 24);
   }
 
-  // Vida (coraçõezinhos / blocos)
+  // Vida (coraçõezinhos)
   ctx.fillStyle = '#00ffcc';
-  ctx.fillText('HP:', W / 2 - 60, 24);
+  ctx.fillText('HP:', W / 2 - 80, 24);
 
   for (let i = 0; i < player.maxHp; i++) {
     const filled = i < player.hp;
-    const x = W / 2 - 30 + i * 28;
+    const x = W / 2 - 50 + i * 28;
     const y = 7;
     const w = 22;
     const h = 20;
@@ -684,6 +684,23 @@ function drawStartOverlay() {
   ctx.textAlign = 'left';
   ctx.globalAlpha = 1;
 }
+
+// ─── Responsividade ──────────────────────────
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  W = canvas.width;
+  H = canvas.height;
+  GROUND_Y = H - 60;
+
+  // Ajusta o jogador para não afundar ou voar se estiver no chão
+  if (player && player.onGround) {
+    player.y = GROUND_Y - PLAYER_H;
+  }
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); // Inicializa dimensões corretas
 
 // ─── Resetar Jogo ─────────────────────────────
 function resetGame() {
