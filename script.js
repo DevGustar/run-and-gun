@@ -84,10 +84,10 @@ document.addEventListener('keydown', (e) => {
   }
 
   // Disparo: só dispara ao PRESSIONAR (não ao segurar)
-  // e respeita o cooldown mínimo de 30ms entre tiros
+  // e respeita o cooldown mínimo de 200ms entre tiros
   if (e.key.toLowerCase() === 'l' && !gameOver && !lKeyHeld) {
     const now = Date.now();
-    if (now - shootLastTime >= 100) {
+    if (now - shootLastTime >= 200) {
       shootBullet();
       shootLastTime = now;
     }
