@@ -12,14 +12,14 @@ let W = canvas.width;
 let H = canvas.height;
 
 // ─── Constantes de layout ────────────────────
-let GROUND_Y = H - 60;   // Topo do chão
-const GROUND_H = 60;       // Altura do chão
-const PLAYER_W = 28;
-const PLAYER_H = 48;
-const BULLET_W = 14;
-const BULLET_H = 6;
-const ENEMY_W = 34;
-const ENEMY_H = 44;
+let GROUND_Y = H * 0.65;   // Topo do chão (reposicionado para o meio/inferior)
+const GROUND_H = 100;       // Altura do chão aumentada
+const PLAYER_W = 50;
+const PLAYER_H = 86;
+const BULLET_W = 25;
+const BULLET_H = 11;
+const ENEMY_W = 60;
+const ENEMY_H = 80;
 
 // ─── Estado global do jogo ───────────────────
 let score = 0;
@@ -42,9 +42,9 @@ function initPlayer() {
     prevY: GROUND_Y - PLAYER_H, // y do frame anterior (para colisão direcional)
     vx: 0,
     vy: 0,
-    speed: 4.5,
-    gravity: 0.4,
-    jumpPower: -11.5,
+    speed: 8.0,
+    gravity: 0.7,
+    jumpPower: -20.0,
     onGround: true,
     jumpsLeft: 2,
     hp: 5,
@@ -186,7 +186,7 @@ function shootBullet() {
   bullets.push({
     x: player.x + PLAYER_W,
     y: player.y + PLAYER_H / 2 - BULLET_H / 2,
-    vx: 11,
+    vx: 20,
     w: BULLET_W,
     h: BULLET_H,
   });
@@ -221,7 +221,7 @@ function enemyShoot(enemy) {
   enemyBullets.push({
     x: enemy.x,                         // saindo do lado esquerdo do inimigo
     y: enemy.y + enemy.h / 2 - BULLET_H / 2,
-    vx: -5,                              // voa para a esquerda em direção ao jogador
+    vx: -9,                              // voa para a esquerda em direção ao jogador
     w: BULLET_W,
     h: BULLET_H,
   });
@@ -524,28 +524,28 @@ function drawParticles() {
 function drawHUD() {
   // Fundo semi-transparente do HUD
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(0, 0, W, 36);
+  ctx.fillRect(0, 0, W, 65);
 
   // Score
   ctx.fillStyle = '#ffee44';
-  ctx.font = 'bold 18px "Courier New", monospace';
+  ctx.font = 'bold 32px "Courier New", monospace';
   ctx.textAlign = 'left';
-  ctx.fillText(`SCORE: ${score}`, 14, 24);
+  ctx.fillText(`SCORE: ${score}`, 20, 42);
   if (isPaused) {
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(' - PAUSADO', 120, 24);
+    ctx.fillText(' - PAUSADO', 240, 42);
   }
 
   // Vida (coraçõezinhos)
   ctx.fillStyle = '#00ffcc';
-  ctx.fillText('HP:', W / 2 - 80, 24);
+  ctx.fillText('HP:', W / 2 - 140, 42);
 
   for (let i = 0; i < player.maxHp; i++) {
     const filled = i < player.hp;
-    const x = W / 2 - 50 + i * 28;
-    const y = 7;
-    const w = 22;
-    const h = 20;
+    const x = W / 2 - 80 + i * 50;
+    const y = 14;
+    const w = 40;
+    const h = 36;
 
     ctx.fillStyle = filled ? '#ff3355' : '#333355';
 
@@ -562,7 +562,7 @@ function drawHUD() {
     if (filled) {
       ctx.fillStyle = '#ff88aa';
       ctx.beginPath();
-      ctx.arc(x + w * 0.25, y + h * 0.25, 2, 0, Math.PI * 2);
+      ctx.arc(x + w * 0.25, y + h * 0.25, 4, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -571,7 +571,7 @@ function drawHUD() {
   const secs = Math.floor(frameCount / 60);
   ctx.fillStyle = '#aaaaee';
   ctx.textAlign = 'right';
-  ctx.fillText(`TIME: ${secs}s`, W - 14, 24);
+  ctx.fillText(`TIME: ${secs}s`, W - 20, 42);
   ctx.textAlign = 'left';
 }
 
@@ -630,24 +630,24 @@ function drawGameOver() {
 
   // Título GAME OVER
   ctx.fillStyle = '#ff3355';
-  ctx.font = 'bold 64px "Courier New", monospace';
+  ctx.font = 'bold 96px "Courier New", monospace';
   ctx.textAlign = 'center';
   ctx.shadowColor = '#ff0033';
   ctx.shadowBlur = 20;
-  ctx.fillText('GAME OVER', W / 2, H / 2 - 60);
+  ctx.fillText('GAME OVER', W / 2, H / 2 - 80);
   ctx.shadowBlur = 0;
 
   // Pontuação final
   ctx.fillStyle = '#ffee44';
-  ctx.font = 'bold 28px "Courier New", monospace';
+  ctx.font = 'bold 42px "Courier New", monospace';
   ctx.fillText(`Pontuação: ${score}`, W / 2, H / 2 - 10);
 
   // Instrução de reinício
   const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 350);
   ctx.globalAlpha = pulse;
   ctx.fillStyle = '#88ccff';
-  ctx.font = '22px "Courier New", monospace';
-  ctx.fillText('Pressione  R  para reiniciar', W / 2, H / 2 + 40);
+  ctx.font = '32px "Courier New", monospace';
+  ctx.fillText('Pressione  R  para reiniciar', W / 2, H / 2 + 60);
   ctx.globalAlpha = 1;
 
   ctx.textAlign = 'left';
@@ -664,7 +664,7 @@ function drawStartOverlay() {
   ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 22px "Courier New", monospace';
+  ctx.font = 'bold 36px "Courier New", monospace';
   ctx.textAlign = 'center';
 
   const lines = [
@@ -678,7 +678,7 @@ function drawStartOverlay() {
   ];
 
   lines.forEach((line, i) => {
-    ctx.fillText(line, W / 2, H / 2 - 60 + i * 30);
+    ctx.fillText(line, W / 2, H / 2 - 120 + i * 45);
   });
 
   ctx.textAlign = 'left';
@@ -691,7 +691,7 @@ function resizeCanvas() {
   canvas.height = window.innerHeight;
   W = canvas.width;
   H = canvas.height;
-  GROUND_Y = H - 60;
+  GROUND_Y = H * 0.65;
 
   // Ajusta o jogador para não afundar ou voar se estiver no chão
   if (player && player.onGround) {
