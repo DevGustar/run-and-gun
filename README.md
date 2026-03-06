@@ -2,6 +2,8 @@
 
 Um jogo de ação 2D estilo arcade, desenvolvido inteiramente em **HTML5 Canvas, CSS e JavaScript puro**. O objetivo é sobreviver o maior tempo possível contra hordas de robôs, acumulando a maior pontuação.
 
+![Run & Gun - Survive The Robots](Files/Run%20%26%20Gun%20-%20Survive%20The%20Robots.png)
+
 ## 🎮 Como Jogar
 
 O jogo é focado em reflexos, posicionamento estratégico e uso inteligente das mecânicas de plataforma.
